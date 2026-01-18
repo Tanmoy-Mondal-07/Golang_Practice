@@ -2,8 +2,9 @@ package main
 
 import (
 	"log"
-	"os"
+	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -15,7 +16,7 @@ func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.RealIP)    // rate lemiting
 	r.Use(middleware.RequestID) // rate lemeting and tressing
-	r.Use(middleware.Logger)
+	r.Use(middleware.Logger)// show logs
 	r.Use(middleware.Recoverer) // recover from crashes
 
 	r.Use(middleware.Timeout(60 * time.Second))
@@ -65,10 +66,13 @@ func main() {
 		config: cfg,
 	}
 
+	logger := slog.New(slog.NewTextHandler(os.Stdout,nil))
+	slog.SetDefault(logger)
+
 	h := api.mount()
 	err := api.run(h)
 	if err != nil {
-		log.Println("server has faild to start err:",err)
+		slog.Error("server faild to start", err)
 		os.Exit(1)
 	}
 }
